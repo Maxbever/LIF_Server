@@ -2,6 +2,12 @@
 name = "rustupolis_server"
 version = "0.0.1"
 edition = "2021"
+license = "MIT"
+description = "A library for using space tuples in fog computing"
+repository = "https://github.com/Maxbever/LIF_Server"
+readme = "README.md"
+keywords = ["tuple-space", "concurrent", "distributed"]
+categories = ["data-structures"]
 
 # For documentation of features see the `mio::features` module.
 [features]
