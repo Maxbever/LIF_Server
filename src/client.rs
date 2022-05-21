@@ -1,11 +1,12 @@
-use rustupolis::space::Space;
-use rustupolis::store::SimpleStore;
 use std::sync::{Arc, Mutex};
 
+use rustupolis::space::Space;
+use rustupolis::store::SimpleStore;
+
 pub struct Client {
-    tuple_space:      Arc<Mutex<Space<SimpleStore>>>,
+    tuple_space: Arc<Mutex<Space<SimpleStore>>>,
     tuple_space_name: String,
-    attributes:       Vec<String>,
+    attributes: Vec<String>,
 }
 
 impl Client {

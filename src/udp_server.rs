@@ -1,14 +1,15 @@
-use crate::client::Client;
-use crate::constant::{OK, TUPLE_SPACE_ATTACHED, TUPLE_SPACE_ATTACHED_UPDATED};
-use crate::repository::RequestResponse;
-use crate::Repository;
-use log::warn;
-use mio::net::UdpSocket;
-use mio::{Events, Interest, Poll, Token};
 use std::collections::HashMap;
 use std::io;
 use std::net::SocketAddr;
 use std::str::from_utf8;
+
+use log::warn;
+use mio::{Events, Interest, Poll, Token};
+use mio::net::UdpSocket;
+
+use crate::client::Client;
+use crate::constant::{OK, TUPLE_SPACE_ATTACHED, TUPLE_SPACE_ATTACHED_UPDATED};
+use crate::repository::{Repository, RequestResponse};
 
 // A token to allow us to identify which event is for the `UdpSocket`.
 const UDP_SOCKET: Token = Token(0);
@@ -45,7 +46,7 @@ pub(crate) fn launch_server(
 
         // Process each event.
         for event in events.iter() {
-            // Validate the token we registered our socket with, in this example it will only ever
+            // Validate the token we registered our socket with, in this examples it will only ever
             // be one but we make sure it's valid none the less.
             match event.token() {
                 UDP_SOCKET => loop {
@@ -89,7 +90,7 @@ pub(crate) fn launch_server(
                                     }
                                     RequestResponse::DataResponse(tuple_list) => {
                                         if let Err(e) =
-                                            socket.send_to(tuple_list.as_ref(), source_address)
+                                        socket.send_to(tuple_list.as_ref(), source_address)
                                         {
                                             println!("{}", e)
                                         }

@@ -1,15 +1,15 @@
-use crate::client::Client;
-use crate::repository::RequestResponse;
-use crate::Repository;
-use mio::event::Event;
-use mio::net::{TcpListener, TcpStream};
-use mio::{Events, Interest, Poll, Registry, Token};
-
-use crate::constant::{CONNECTED, OK, TUPLE_SPACE_ATTACHED, TUPLE_SPACE_ATTACHED_UPDATED};
 use std::collections::HashMap;
 use std::io;
 use std::io::{Read, Write};
 use std::str::from_utf8;
+
+use mio::{Events, Interest, Poll, Registry, Token};
+use mio::event::Event;
+use mio::net::{TcpListener, TcpStream};
+
+use crate::client::Client;
+use crate::constant::{CONNECTED, OK, TUPLE_SPACE_ATTACHED, TUPLE_SPACE_ATTACHED_UPDATED};
+use crate::repository::{Repository, RequestResponse};
 
 // Setup some tokens to allow us to identify which event is for which socket.
 const SERVER: Token = Token(0);
@@ -126,7 +126,7 @@ fn handle_connection_event<'a>(
             Ok(_) => registry.reregister(connection, event.token(), Interest::READABLE)?,
             Err(ref err) if would_block(err) => {}
             Err(ref err) if interrupted(err) => {
-                return handle_connection_event(registry, connection, event, clients, repository)
+                return handle_connection_event(registry, connection, event, clients, repository);
             }
             Err(err) => return Err(err),
         }
@@ -175,7 +175,7 @@ fn handle_connection_event<'a>(
                             }
                             Some(_) => {
                                 if let Err(e) =
-                                    connection.write(TUPLE_SPACE_ATTACHED_UPDATED.as_ref())
+                                connection.write(TUPLE_SPACE_ATTACHED_UPDATED.as_ref())
                                 {
                                     println!("{}", e)
                                 }

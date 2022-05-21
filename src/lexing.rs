@@ -4,7 +4,7 @@
 //! Heavily inspired by https://users.rust-lang.org/t/an-suggestions-improvements-for-my-lexer/6081
 
 use rustupolis::tuple;
-use rustupolis::tuple::{Tuple, E};
+use rustupolis::tuple::{E, Tuple};
 
 #[derive(Debug)]
 enum TokenType<'a> {
@@ -159,25 +159,25 @@ impl<'a> Lexer<'a> {
     fn from_token(token_opt: &Option<Token>) -> E {
         match token_opt {
             Some(Token {
-                typ: TokenType::Integer,
-                val,
-            }) => E::I(val.parse::<i32>().unwrap()),
+                     typ: TokenType::Integer,
+                     val,
+                 }) => E::I(val.parse::<i32>().unwrap()),
             Some(Token {
-                typ: TokenType::Float,
-                val,
-            }) => E::D(val.parse::<f64>().unwrap()),
+                     typ: TokenType::Float,
+                     val,
+                 }) => E::D(val.parse::<f64>().unwrap()),
             Some(Token {
-                typ: TokenType::String,
-                val,
-            }) => E::S((*val).to_string()),
+                     typ: TokenType::String,
+                     val,
+                 }) => E::S((*val).to_string()),
             Some(Token {
-                typ: TokenType::Wildcard,
-                val: _,
-            }) => E::Any,
+                     typ: TokenType::Wildcard,
+                     val: _,
+                 }) => E::Any,
             Some(Token {
-                typ: TokenType::Tuple(tokenlist),
-                val: _,
-            }) => E::T(Tuple::from_vec(
+                     typ: TokenType::Tuple(tokenlist),
+                     val: _,
+                 }) => E::T(Tuple::from_vec(
                 tokenlist.iter().map(|t| Lexer::from_token(t)).collect(),
             )),
             None => E::None,

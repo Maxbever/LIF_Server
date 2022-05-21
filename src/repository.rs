@@ -1,18 +1,20 @@
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex, RwLock};
+
+use futures::executor;
+use rustupolis::space::Space;
+use rustupolis::store::SimpleStore;
+use rustupolis::tuple;
+use rustupolis::tuple::{E, Tuple};
+
 use crate::client::Client;
 use crate::constant::{
-    ADMIN_ATTRIBUTE, ATTACH, CREATE, DELETE, EMPTY_REQUEST, IN, NO_MATCHING_TUPLE_FOUND,
+    ATTACH, CREATE, DELETE, EMPTY_REQUEST, IN, NO_MATCHING_TUPLE_FOUND,
     NO_PERMISSION, NO_TUPLE_SPACE_ATTACHED, OUT, PERMISSION, READ, REQUEST_DOESNT_EXIST,
     TUPLE_IS_EMPTY, TUPLE_SPACE_NOT_FOUND,
 };
 use crate::lexing::Lexer;
 use crate::repository::RequestResponse::{DataResponse, NoResponse, OkResponse, SpaceResponse};
-use futures::executor;
-use rustupolis::space::Space;
-use rustupolis::store::SimpleStore;
-use rustupolis::tuple;
-use rustupolis::tuple::{Tuple, E};
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex, RwLock};
 
 pub struct Repository {
     tuple_spaces: Arc<RwLock<HashMap<String, Arc<Mutex<Space<SimpleStore>>>>>>,
@@ -27,7 +29,7 @@ pub enum RequestResponse {
 }
 
 impl Repository {
-    pub fn new() -> Repository {
+    pub fn new(admin_attribute: &str) -> Repository {
         let permission = Arc::new(Mutex::new(Space::new(SimpleStore::new())));
         let new_repository = Repository {
             tuple_spaces: Arc::new(RwLock::new(HashMap::with_capacity(128))),
@@ -41,10 +43,10 @@ impl Repository {
         let mut permission_tuple_space = new_repository.permission_tuple_space.lock().unwrap();
         let result = executor::block_on(permission_tuple_space.tuple_out(tuple!(
             E::str(CREATE),
-            E::T(tuple!(E::str(ADMIN_ATTRIBUTE)))
+            E::T(tuple!(E::str(admin_attribute)))
         )));
         drop(permission_tuple_space);
-        new_repository.add_permission_list(vec![String::from(ADMIN_ATTRIBUTE)], PERMISSION);
+        new_repository.add_permission_list(vec![String::from(admin_attribute)], PERMISSION);
         match result {
             Ok(_) => new_repository,
             Err(error) => {
@@ -222,7 +224,7 @@ impl Repository {
                                     if tuple.is_defined() {
                                         let mut space = client.tuple_space().lock().unwrap();
                                         if let Err(error) =
-                                            executor::block_on(space.tuple_out(tuple))
+                                        executor::block_on(space.tuple_out(tuple))
                                         {
                                             eprintln!(
                                                 "Cannot push tuple into space! Encountered error {:?}",
@@ -264,7 +266,7 @@ impl Repository {
                                 if !rd_tup.is_empty() {
                                     let mut space = client.tuple_space().lock().unwrap();
                                     if let Some(match_tup) =
-                                        executor::block_on(space.tuple_rd(rd_tup))
+                                    executor::block_on(space.tuple_rd(rd_tup))
                                     {
                                         if match_tup.is_empty() {
                                             response =
@@ -316,7 +318,7 @@ impl Repository {
                                     let mut space = client.tuple_space().lock().unwrap();
                                     println!("pulling in tuple matching {} from space", rd_tup);
                                     if let Some(match_tup) =
-                                        executor::block_on(space.tuple_in(rd_tup))
+                                    executor::block_on(space.tuple_in(rd_tup))
                                     {
                                         if match_tup.is_empty() {
                                             response =

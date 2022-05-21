@@ -1,6 +1,6 @@
 [package]
 name = "rustupolis_server"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 
 # For documentation of features see the `mio::features` module.
@@ -14,13 +14,23 @@ net = []
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "rustupolis_server"
+path = "src/lib.rs"
+test = true
+doctest = true
+
 [dependencies]
 mio = {version = "0.8", features = ["net","os-poll"]}
-rustupolis = { path = "../rustupolis" }
+rustupolis = "0.0.2"
 futures = "0.3.5"
 log = "0.4.8"
 error-chain = "0.12.2"
 crossbeam = "0.8"
+
+[[example]]
+name = "multiple_server"
+path = "examples/multiple_server/main.rs"
 
 [[test]]
 name = "test_server"
