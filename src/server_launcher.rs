@@ -1,4 +1,4 @@
-use crate::Server;
+use crate::server::Server;
 
 pub struct ServerLauncher<'a> {
     server_list: Vec<Server<'a>>,

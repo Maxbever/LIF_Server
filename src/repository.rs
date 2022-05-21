@@ -169,7 +169,7 @@ impl Repository {
         if words.len() != 0 {
             match words[0] {
                 CREATE => {
-                    let attribute_to_create = String::from(words[1]);
+                    let attribute_to_create = String::from(words[1]).replace("\"","");
                     if self.check_permission(CREATE, &vec![attribute_to_create], None) {
                         self.add_tuple_space(String::from(words[2]));
                         let mut attributes_list: Vec<String> = Vec::with_capacity(126);
