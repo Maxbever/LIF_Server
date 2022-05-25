@@ -55,15 +55,23 @@ impl Repository {
         }
     }
 
-    pub fn add_tuple_space(&self, name: String) {
+    pub fn add_tuple_space(&self, name: String, attributes: Vec<String>) {
         self.tuple_spaces
             .write()
             .unwrap()
-            .insert(name, Arc::new(Mutex::new(Space::new(SimpleStore::new()))));
+            .insert(name.clone(), Arc::new(Mutex::new(Space::new(SimpleStore::new()))));
+        self.add_permission_list(attributes,name.as_str());
     }
 
     pub fn remove_tuple_space(&self, name: &str) {
         self.tuple_spaces.write().unwrap().remove(name);
+    }
+
+    pub fn add_tuple_to_tuple_space(&self, tuple_space:String, tuple:Tuple){
+        let tuple_spaces = self.tuple_spaces.read().unwrap();
+        let tuple_space = tuple_spaces.get(&*tuple_space).unwrap();
+        let mut space = tuple_space.lock().unwrap();
+        executor::block_on(space.tuple_out(tuple)).expect("ERROR - When out a value");
     }
 
     pub fn check_permission(
@@ -171,12 +179,11 @@ impl Repository {
                 CREATE => {
                     let attribute_to_create = String::from(words[1]).replace("\"","");
                     if self.check_permission(CREATE, &vec![attribute_to_create], None) {
-                        self.add_tuple_space(String::from(words[2]));
-                        let mut attributes_list: Vec<String> = Vec::with_capacity(126);
+                        let mut attributes_list: Vec<String> = Vec::new();
                         for index in 3..words.len() {
                             attributes_list.push(String::from(words[index]));
                         }
-                        self.add_permission_list(attributes_list, words[2]);
+                        self.add_tuple_space(String::from(words[2]),attributes_list);
                         OkResponse()
                     } else {
                         NoResponse(String::from(NO_PERMISSION))

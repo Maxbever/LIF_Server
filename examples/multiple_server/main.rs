@@ -1,3 +1,4 @@
+use rustupolis::tuple::{E, Tuple};
 use rustupolis_server::repository::Repository;
 use rustupolis_server::server::{Protocol, Server};
 use rustupolis_server::server_launcher::ServerLauncher;
@@ -8,6 +9,9 @@ fn main() {
     let port_udp = String::from("9001");
 
     let repository = Repository::new("admin");
+
+    repository.add_tuple_space(String::from("DATA"),vec![String::from("admin")]);
+    repository.add_tuple_to_tuple_space(String::from("DATA"), Tuple::new(&[E::str("test")]));
 
     let server_tcp = Server::new(Protocol::TCP, &ip_address, &port_tcp, &repository);
     let server_udp = Server::new(Protocol::UDP, &ip_address, &port_udp, &repository);
