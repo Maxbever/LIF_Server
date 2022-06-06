@@ -7,7 +7,7 @@ use log::warn;
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
 
-use crate::client::Client;
+use crate::tuple_space::TupleSpace;
 use crate::constant::{OK, TUPLE_SPACE_ATTACHED, TUPLE_SPACE_ATTACHED_UPDATED};
 use crate::repository::{Repository, RequestResponse};
 
@@ -29,7 +29,7 @@ pub(crate) fn launch_server(
 
     let mut socket = UdpSocket::bind(addr)?;
 
-    let mut client_list: HashMap<SocketAddr, Client> = HashMap::new();
+    let mut client_list: HashMap<SocketAddr, TupleSpace> = HashMap::new();
     // Register our socket with the token defined above and an interest in being
     // `READABLE`.
     poll.registry()

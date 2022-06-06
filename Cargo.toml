@@ -38,6 +38,10 @@ crossbeam = "0.8"
 name = "multiple_server"
 path = "examples/multiple_server/main.rs"
 
+[[example]]
+name = "client"
+path = "examples/client/main.rs"
+
 [[test]]
 name = "test_server"
 path = "tests/test_server.rs"

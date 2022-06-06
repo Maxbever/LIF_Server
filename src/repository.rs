@@ -7,7 +7,7 @@ use rustupolis::store::SimpleStore;
 use rustupolis::tuple;
 use rustupolis::tuple::{E, Tuple};
 
-use crate::client::Client;
+use crate::tuple_space::TupleSpace;
 use crate::constant::{
     ATTACH, CREATE, DELETE, EMPTY_REQUEST, IN, NO_MATCHING_TUPLE_FOUND,
     NO_PERMISSION, NO_TUPLE_SPACE_ATTACHED, OUT, PERMISSION, READ, REQUEST_DOESNT_EXIST,
@@ -22,7 +22,7 @@ pub struct Repository {
 }
 
 pub enum RequestResponse {
-    SpaceResponse(Client),
+    SpaceResponse(TupleSpace),
     DataResponse(String),
     OkResponse(),
     NoResponse(String),
@@ -171,7 +171,7 @@ impl Repository {
     pub fn manage_request(
         &self,
         request: String,
-        client_option: Option<&Client>,
+        client_option: Option<&TupleSpace>,
     ) -> RequestResponse {
         let words: Vec<&str> = request.split_whitespace().collect();
         if words.len() != 0 {
@@ -209,7 +209,7 @@ impl Repository {
                             for index in 2..words.len() {
                                 attributes_list.push(String::from(words[index]));
                             }
-                            SpaceResponse(Client::new(
+                            SpaceResponse(TupleSpace::new(
                                 tuple_space_ref.clone(),
                                 attributes_list,
                                 words[1],

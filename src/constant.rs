@@ -1,4 +1,5 @@
 pub const PERMISSION: &str = "permission";
+pub const SPACE: &str = " ";
 pub const CREATE: &str = "create";
 pub const DELETE: &str = "delete";
 pub const OUT: &str = "out";
@@ -16,3 +17,8 @@ pub const TUPLE_IS_EMPTY: &str = "ERROR - The tuple is empty";
 pub const REQUEST_DOESNT_EXIST: &str = "ERROR - The request doesn't exist";
 pub const EMPTY_REQUEST: &str = "ERROR - The request is empty";
 pub const CONNECTED: &str = "Connected";
+pub const STOP_SERVER: &str = "STOP";
+pub const TIMEOUT: u64 = 1;
+pub const TCP: &str = "tcp";
+pub const UDP: &str = "udp";
+pub const ERROR: &str = "ERROR";

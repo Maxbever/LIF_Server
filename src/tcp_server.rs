@@ -7,7 +7,7 @@ use mio::{Events, Interest, Poll, Registry, Token};
 use mio::event::Event;
 use mio::net::{TcpListener, TcpStream};
 
-use crate::client::Client;
+use crate::tuple_space::TupleSpace;
 use crate::constant::{CONNECTED, OK, TUPLE_SPACE_ATTACHED, TUPLE_SPACE_ATTACHED_UPDATED};
 use crate::repository::{Repository, RequestResponse};
 
@@ -36,7 +36,7 @@ pub fn launch_server<'a>(
     poll.registry()
         .register(&mut server, SERVER, Interest::READABLE)?;
 
-    let mut clients: HashMap<Token, Client> = HashMap::new();
+    let mut clients: HashMap<Token, TupleSpace> = HashMap::new();
 
     // Map of `Token` -> `TcpStream`.
     let mut connections = HashMap::new();
@@ -117,7 +117,7 @@ fn handle_connection_event<'a>(
     registry: &Registry,
     connection: &mut TcpStream,
     event: &Event,
-    clients: &mut HashMap<Token, Client>,
+    clients: &mut HashMap<Token, TupleSpace>,
     repository: &'a Repository,
 ) -> io::Result<bool> {
     if event.is_writable() {
