@@ -19,9 +19,8 @@ fn main() {
 
     client.attach(&server_tcp_name,vec![attribute.clone()],&tuple_space_name);
 
-    client.out(vec![tuple![ E::str("\"temp\""), E::I(21),], tuple![ E::str("temp"), E::I(23),], tuple![ E::str("temp"), E::I(29),], tuple![ E::str("temp"), E::I(25),], tuple![ E::str("temp"), E::I(20),]]);
+    client.out(vec![tuple![ E::str("temp"), E::I(21),], tuple![ E::str("temp"), E::I(23),], tuple![ E::str("temp"), E::I(29),], tuple![ E::str("temp"), E::I(25),], tuple![ E::str("temp"), E::I(20),]]);
 
-   // let data = client.in_instr(vec![tuple![ E::str("temp"), E::Any], tuple![ E::str("temp"), E::Any], tuple![ E::str("temp"), E::Any], tuple![ E::str("temp"),E::Any], tuple![ E::str("temp"), E::Any]]);
-    //dbg!(data);
+    let data = client.in_instr(vec![tuple![ E::str("temp"), E::Any], tuple![ E::str("temp"), E::Any], tuple![ E::str("temp"), E::Any], tuple![ E::str("temp"),E::Any], tuple![ E::str("temp"), E::Any]]);
     let sum = 0;
 }

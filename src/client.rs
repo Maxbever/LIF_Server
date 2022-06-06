@@ -1,9 +1,9 @@
 use crate::constant::{ATTACH, CREATE, DELETE, ERROR, IN, OK, OUT, READ, SPACE};
 use crate::lexing::Lexer;
 use crate::server_client::ServerClient;
-use rustupolis::tuple::Tuple;
-use std::collections::HashMap;
 use rustupolis::tuple::E::S;
+use rustupolis::tuple::{Tuple, E};
+use std::collections::HashMap;
 
 pub struct Client {
     server_list: HashMap<String, ServerClient>,
@@ -160,14 +160,16 @@ impl Client {
             Some(server) => {
                 let mut tuple_list: String = String::new();
                 for tuple in list_tuple {
-                    tuple_list.push_str(&*tuple.to_string());
+                    let request: String = String::from("(");
+                    tuple_list += &*(Client::format_tuple(tuple, request) + ")");
                 }
-                let response = server.send_message(String::from(operation) + SPACE + &*tuple_list);
+                let mut response = server.send_message(String::from(operation) + SPACE + &*tuple_list);
                 println!("{}", response);
                 let _ = &self.server_list.insert(server_attached, server);
                 if response.contains(&String::from(ERROR)) || response.contains(&String::from(OK)) {
                     return Tuple::new(&[]);
                 }
+                Client::remove_whitespace(&mut response);
                 let tuple_list: Vec<Tuple> = Lexer::new(&response).collect();
                 if let Some(response) = tuple_list.first() {
                     return response.clone();
@@ -175,5 +177,27 @@ impl Client {
             }
         }
         return Tuple::new(&[]);
+    }
+
+    fn format_tuple(tuple: Tuple, mut request: String) -> String {
+        if !tuple.is_empty() {
+            request = match tuple.first() {
+                S(value) => request + "\"" + value + "\"",
+                E::T(tuple) => "(".to_owned() + &Client::format_tuple(tuple.clone(), request.clone()) + ")",
+                E::I(rest) => request + &*rest.to_string(),
+                E::D(rest) => request + &*rest.to_string(),
+                E::Any => request + " _",
+                E::None => request,
+            };
+            if !tuple.rest().is_empty() {
+                request += ","
+            }
+            request = Client::format_tuple(tuple.rest(), request.clone())
+        }
+        return request;
+    }
+
+    fn remove_whitespace(s: &mut String) {
+        s.retain(|c| !c.is_whitespace());
     }
 }
