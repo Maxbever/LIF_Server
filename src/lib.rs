@@ -1,5 +1,7 @@
 extern crate core;
 
+pub use rustupolis::tuple;
+pub use rustupolis::tuple::E;
 mod tuple_space;
 mod constant;
 mod lexing;

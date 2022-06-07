@@ -1,5 +1,5 @@
 use rustupolis::tuple;
-use rustupolis::tuple::{Tuple, E};
+use rustupolis::tuple::E;
 use rustupolis_server::client::Client;
 
 fn main() {
