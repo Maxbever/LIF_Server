@@ -325,8 +325,7 @@ impl Repository {
                                     let mut space = client.tuple_space().lock().unwrap();
                                     println!("pulling in tuple matching {} from space", rd_tup);
                                     if let Some(match_tup) =
-                                    executor::block_on(space.tuple_in(rd_tup))
-                                    {
+                                    executor::block_on(space.tuple_in(rd_tup)) {
                                         if match_tup.is_empty() {
                                             response =
                                                 NoResponse(String::from(NO_MATCHING_TUPLE_FOUND));
@@ -342,7 +341,7 @@ impl Repository {
                                     response = NoResponse(String::from(TUPLE_IS_EMPTY));
                                 }
                             }
-                            if tuple_list.eq(&String::from("(")) {
+                            if tuple_list.is_empty() {
                                 response
                             } else {
                                 if nb_tuples > 1 {
