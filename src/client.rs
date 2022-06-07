@@ -186,7 +186,7 @@ impl Client {
                 E::T(tuple) => "(".to_owned() + &Client::format_tuple(tuple.clone(), request.clone()) + ")",
                 E::I(rest) => request + &*rest.to_string(),
                 E::D(rest) => request + &*rest.to_string(),
-                E::Any => request + " _",
+                E::Any => request + "_",
                 E::None => request,
             };
             if !tuple.rest().is_empty() {
