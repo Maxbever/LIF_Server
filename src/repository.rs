@@ -74,6 +74,13 @@ impl Repository {
         executor::block_on(space.tuple_out(tuple)).expect("ERROR - When out a value");
     }
 
+    pub fn remove_tuple_to_tuple_space(&self, tuple_space:String, tuple:Tuple){
+        let tuple_spaces = self.tuple_spaces.read().unwrap();
+        let tuple_space = tuple_spaces.get(&*tuple_space).unwrap();
+        let mut space = tuple_space.lock().unwrap();
+        executor::block_on(space.tuple_in(tuple)).expect("ERROR - When in a value");
+    }
+
     pub fn check_permission(
         &self,
         action: &str,

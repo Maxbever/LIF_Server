@@ -11,7 +11,9 @@ fn main() {
     let repository = Repository::new("admin");
 
     repository.add_tuple_space(String::from("DATA"),vec![String::from("admin")]);
+
     repository.add_tuple_to_tuple_space(String::from("DATA"), Tuple::new(&[E::str("test")]));
+    repository.remove_tuple_to_tuple_space(String::from("DATA"), Tuple::new(&[E::Any]));
 
     let server_tcp = Server::new(Protocol::TCP, &ip_address, &port_tcp, &repository);
     let server_udp = Server::new(Protocol::UDP, &ip_address, &port_udp, &repository);

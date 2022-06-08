@@ -29,7 +29,6 @@ impl ServerLauncher<'_> {
                     }
                 });
             }
-        })
-            .unwrap();
+        }).unwrap();
     }
 }
