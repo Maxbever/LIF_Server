@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::io;
 use std::net::SocketAddr;
-use std::str::from_utf8;
+use aes_gcm_siv::{Aes128GcmSiv, Key, Nonce}; // Or `Aes128GcmSiv`
+use aes_gcm_siv::aead::{Aead, NewAead};
 
 use log::warn;
 use mio::{Events, Interest, Poll, Token};
@@ -19,6 +20,7 @@ pub(crate) fn launch_server(
     ip_address: &String,
     port: &String,
     repository: &Repository,
+    key: &str
 ) -> io::Result<()> {
     let mut poll = Poll::new()?;
     let mut events = Events::with_capacity(126);
@@ -52,16 +54,15 @@ pub(crate) fn launch_server(
                 UDP_SOCKET => loop {
                     match socket.recv_from(&mut buf) {
                         Ok((packet_size, source_address)) => {
-                            if let Ok(str_buf) = from_utf8(&buf[..packet_size]) {
                                 let client = client_list.get(&source_address);
                                 let result = repository
-                                    .manage_request(String::from(str_buf.trim_end()), client);
+                                    .manage_request(&buf[..packet_size], client,key);
                                 match result {
                                     RequestResponse::SpaceResponse(new_client) => {
                                         match client_list.insert(source_address, new_client) {
                                             None => {
                                                 if let Err(e) = socket.send_to(
-                                                    TUPLE_SPACE_ATTACHED.as_ref(),
+                                                    &*encrypt_data(key,TUPLE_SPACE_ATTACHED.as_ref()),
                                                     source_address,
                                                 ) {
                                                     println!("{}", e)
@@ -69,7 +70,7 @@ pub(crate) fn launch_server(
                                             }
                                             Some(_) => {
                                                 if let Err(e) = socket.send_to(
-                                                    TUPLE_SPACE_ATTACHED_UPDATED.as_ref(),
+                                                    &*encrypt_data(key,TUPLE_SPACE_ATTACHED_UPDATED.as_ref()),
                                                     source_address,
                                                 ) {
                                                     println!("{}", e)
@@ -78,25 +79,25 @@ pub(crate) fn launch_server(
                                         };
                                     }
                                     RequestResponse::NoResponse(x) => {
-                                        if let Err(e) = socket.send_to(x.as_ref(), source_address) {
+                                        if let Err(e) = socket.send_to(&*encrypt_data(key,x.as_ref()), source_address) {
                                             println!("{}", e)
                                         }
                                     }
                                     RequestResponse::OkResponse() => {
-                                        if let Err(e) = socket.send_to(OK.as_ref(), source_address)
+                                        if let Err(e) = socket.send_to(&*encrypt_data(key,OK.as_ref()), source_address)
                                         {
                                             println!("{}", e)
                                         }
                                     }
                                     RequestResponse::DataResponse(tuple_list) => {
                                         if let Err(e) =
-                                        socket.send_to(tuple_list.as_ref(), source_address)
+                                        socket.send_to(&*encrypt_data(key,tuple_list.as_ref()), source_address)
                                         {
                                             println!("{}", e)
                                         }
                                     }
                                 }
-                            }
+
                         }
                         Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
                             // If we get a `WouldBlock` error we know our socket
@@ -119,5 +120,14 @@ pub(crate) fn launch_server(
                 }
             }
         }
+    }
+
+    fn encrypt_data(key:&str, text:&str) -> Vec<u8> {
+        let key = Key::from_slice(key.as_ref());
+        let cipher = Aes128GcmSiv::new(key);
+
+        let nonce = Nonce::from_slice(b"unique nonce");
+
+        return cipher.encrypt(nonce,text.as_ref()).expect("encryption failure!");
     }
 }

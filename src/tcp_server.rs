@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::io;
 use std::io::{Read, Write};
-use std::str::from_utf8;
+use aes_gcm_siv::{Aes128GcmSiv, Key, Nonce}; // Or `Aes128GcmSiv`
+use aes_gcm_siv::aead::{Aead, NewAead};
 
 use mio::{Events, Interest, Poll, Registry, Token};
 use mio::event::Event;
@@ -19,6 +20,7 @@ pub fn launch_server<'a>(
     ip_address: &String,
     port: &String,
     repository: &Repository,
+    key: &str
 ) -> std::io::Result<()> {
     let address = format!("{}:{}", ip_address, port);
 
@@ -87,6 +89,7 @@ pub fn launch_server<'a>(
                             event,
                             &mut clients,
                             repository,
+                            key
                         ) {
                             Ok(result) => result,
                             Err(_) => true,
@@ -119,6 +122,7 @@ fn handle_connection_event<'a>(
     event: &Event,
     clients: &mut HashMap<Token, TupleSpace>,
     repository: &'a Repository,
+    key: &str
 ) -> io::Result<bool> {
     if event.is_writable() {
         match connection.write(CONNECTED.as_ref()) {
@@ -126,7 +130,7 @@ fn handle_connection_event<'a>(
             Ok(_) => registry.reregister(connection, event.token(), Interest::READABLE)?,
             Err(ref err) if would_block(err) => {}
             Err(ref err) if interrupted(err) => {
-                return handle_connection_event(registry, connection, event, clients, repository);
+                return handle_connection_event(registry, connection, event, clients, repository,key);
             }
             Err(err) => return Err(err),
         }
@@ -160,22 +164,23 @@ fn handle_connection_event<'a>(
 
         if bytes_read != 0 {
             let received_data = &received_data[..bytes_read];
-            if let Ok(str_buf) = from_utf8(received_data) {
+            //if let Ok(str_buf) = from_utf8(received_data) {
                 let client_option = clients.get(&event.token());
-                println!("{}", String::from(str_buf.trim_end()));
+                //println!("{}", received_data.to_ascii_lowercase());
                 let result =
-                    repository.manage_request(String::from(str_buf.trim_end()), client_option);
+                    repository.manage_request(received_data, client_option,key);
+
                 match result {
                     RequestResponse::SpaceResponse(client) => {
                         match clients.insert(event.token(), client) {
                             None => {
-                                if let Err(e) = connection.write(TUPLE_SPACE_ATTACHED.as_ref()) {
+                                if let Err(e) = connection.write(&*encrypt_data(key, TUPLE_SPACE_ATTACHED.as_ref())) {
                                     println!("{}", e)
                                 }
                             }
                             Some(_) => {
                                 if let Err(e) =
-                                connection.write(TUPLE_SPACE_ATTACHED_UPDATED.as_ref())
+                                connection.write(&*encrypt_data(key, TUPLE_SPACE_ATTACHED_UPDATED.as_ref()))
                                 {
                                     println!("{}", e)
                                 }
@@ -183,24 +188,24 @@ fn handle_connection_event<'a>(
                         };
                     }
                     RequestResponse::NoResponse(x) => {
-                        if let Err(e) = connection.write(x.as_ref()) {
+                        if let Err(e) = connection.write(&*encrypt_data(key, x.as_ref())) {
                             println!("{}", e)
                         }
                     }
                     RequestResponse::OkResponse() => {
-                        if let Err(e) = connection.write(OK.as_ref()) {
+                        if let Err(e) = connection.write(&*encrypt_data(key, OK.as_ref())) {
                             println!("{}", e)
                         }
                     }
                     RequestResponse::DataResponse(tuple_list) => {
-                        if let Err(e) = connection.write(tuple_list.as_ref()) {
+                        if let Err(e) = connection.write(&*encrypt_data(key, tuple_list.as_ref())) {
                             println!("{}", e)
                         }
                     }
                 }
-            } else {
-                println!("Received (none UTF-8) data: {:?}", received_data);
-            }
+            // } else {
+            //     println!("Received (none UTF-8) data: {:?}", received_data);
+            // }
         }
 
         if connection_closed {
@@ -217,4 +222,13 @@ fn would_block(err: &io::Error) -> bool {
 
 fn interrupted(err: &io::Error) -> bool {
     err.kind() == io::ErrorKind::Interrupted
+}
+
+fn encrypt_data(key:&str, text:&str) -> Vec<u8> {
+    let key = Key::from_slice(key.as_ref());
+    let cipher = Aes128GcmSiv::new(key);
+
+    let nonce = Nonce::from_slice(b"unique nonce");
+
+    return cipher.encrypt(nonce,text.as_ref()).expect("encryption failure!");
 }

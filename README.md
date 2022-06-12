@@ -25,6 +25,6 @@ An example for launching 2 servers is available in the file ```\example```
 
 - [x] Make the tuple space available on the network
 - [x] Add a access control system
-- [ ] Add the encryption on the communication
+- [x] Add the encryption on the communication
 - [ ] Add a data persistency system
 - [ ] Add a system of data placement policy 

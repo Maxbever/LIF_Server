@@ -24,8 +24,9 @@ impl Client {
         port: String,
         protocol: String,
         server_name: &String,
+        key: &str,
     ) {
-        let server = ServerClient::new(ip_address, port, protocol, server_name.clone());
+        let server = ServerClient::new(ip_address, port, protocol, server_name.clone(), key);
         self.server_list.insert(server_name.clone(), server);
     }
 
@@ -163,7 +164,8 @@ impl Client {
                     let request: String = String::from("(");
                     tuple_list += &*(Client::format_tuple(tuple, request) + ")");
                 }
-                let mut response = server.send_message(String::from(operation) + SPACE + &*tuple_list);
+                let mut response =
+                    server.send_message(String::from(operation) + SPACE + &*tuple_list);
                 println!("{}", response);
                 let _ = &self.server_list.insert(server_attached, server);
                 if response.contains(&String::from(ERROR)) || response.contains(&String::from(OK)) {
@@ -183,7 +185,9 @@ impl Client {
         if !tuple.is_empty() {
             request = match tuple.first() {
                 S(value) => request + "\"" + value + "\"",
-                E::T(tuple) => "(".to_owned() + &Client::format_tuple(tuple.clone(), request.clone()) + ")",
+                E::T(tuple) => {
+                    "(".to_owned() + &Client::format_tuple(tuple.clone(), request.clone()) + ")"
+                }
                 E::I(rest) => request + &*rest.to_string(),
                 E::D(rest) => request + &*rest.to_string(),
                 E::Any => request + "_",

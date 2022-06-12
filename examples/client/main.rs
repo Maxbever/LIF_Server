@@ -10,18 +10,21 @@ fn main() {
     let tuple_space_name = String::from("data");
     let tuple_space_name_mean = String::from("tuple_space_mean");
     let attribute = String::from("attribute");
+    let key = "an example very ";
 
     client.connect(
         String::from("127.0.0.1"),
         String::from("9000"),
         String::from("tcp"),
         &server_tcp_name,
+        key,
     );
     client.connect(
         String::from("127.0.0.1"),
         String::from("9001"),
         String::from("udp"),
         &server_udp_name,
+        key,
     );
 
     client.create(

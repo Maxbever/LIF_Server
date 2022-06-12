@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
+use aes_gcm_siv::{Aes128GcmSiv, Key, Nonce}; // Or `Aes128GcmSiv`
+use aes_gcm_siv::aead::{Aead, NewAead};
 
 use futures::executor;
 use rustupolis::space::Space;
@@ -175,11 +177,28 @@ impl Repository {
         }
     }
 
+    fn decrypt_data(key:&str, text: &[u8]) -> Vec<u8> {
+        let key = Key::from_slice(key.as_ref());
+        let cipher = Aes128GcmSiv::new(key);
+        let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
+        match cipher.decrypt(nonce, text) {
+            Ok(test) => {
+                return test;
+            }
+            Err(e) => {
+                panic!("{}",e)
+            }
+        };
+    }
+
     pub fn manage_request(
         &self,
-        request: String,
+        request: &[u8],
         client_option: Option<&TupleSpace>,
+        key:&str
     ) -> RequestResponse {
+        let request_str = &*Repository::decrypt_data(key, request).clone();
+        let request = std::str::from_utf8(request_str).unwrap();
         let words: Vec<&str> = request.split_whitespace().collect();
         if words.len() != 0 {
             match words[0] {
