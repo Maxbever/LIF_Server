@@ -211,6 +211,7 @@ impl ServerClient {
 
     pub fn send_message(&self, message: String) -> String {
         let (tx, rx_response) = &self.mpsc_channel;
+        println!("Sending :{}",message);
         match tx.send(message) {
             Ok(_) => {}
             Err(error) => {
@@ -221,6 +222,7 @@ impl ServerClient {
         loop {
             match rx_response.recv_timeout(Duration::from_secs(TIMEOUT)) {
                 Ok(response) => {
+                    println!("Response : {}",response);
                     return response;
                 }
                 Err(_) => {}

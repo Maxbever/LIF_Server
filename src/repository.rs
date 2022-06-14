@@ -186,7 +186,7 @@ impl Repository {
                 test
             }
             Err(_) => {
-                text.to_vec()
+                panic!();
             }
         };
     }
@@ -199,6 +199,7 @@ impl Repository {
     ) -> RequestResponse {
         let request_str = &*Repository::decrypt_data(key, request).clone();
         let request = std::str::from_utf8(request_str).unwrap();
+        println!("Decrypted request: {}",&request);
         let words: Vec<&str> = request.split_whitespace().collect();
         if words.len() != 0 {
             match words[0] {
