@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::io;
 use std::io::{Read, Write};
-use aes_gcm_siv::{Aes128GcmSiv, Key, Nonce}; // Or `Aes128GcmSiv`
-use aes_gcm_siv::aead::{Aead, NewAead};
+use aes_gcm::{Aes128Gcm, Key, Nonce}; // Or `Aes128Gcm`
+use aes_gcm::aead::{Aead, NewAead};
 
 use mio::{Events, Interest, Poll, Registry, Token};
 use mio::event::Event;
@@ -226,7 +226,7 @@ fn interrupted(err: &io::Error) -> bool {
 
 fn encrypt_data(key:&str, text:&str) -> Vec<u8> {
     let key = Key::from_slice(key.as_ref());
-    let cipher = Aes128GcmSiv::new(key);
+    let cipher = Aes128Gcm::new(key);
 
     let nonce = Nonce::from_slice(b"unique nonce");
 

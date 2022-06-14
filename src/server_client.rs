@@ -8,8 +8,8 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::time::Duration;
 use std::{io, thread};
-use aes_gcm_siv::{Aes128GcmSiv, Key, Nonce}; // Or `Aes128GcmSiv`
-use aes_gcm_siv::aead::{Aead, NewAead};
+use aes_gcm::{Aes128Gcm, Key, Nonce}; // Or `Aes128Gcm`
+use aes_gcm::aead::{Aead, NewAead};
 
 pub struct ServerClient {
     mpsc_channel: (Sender<String>, Receiver<String>),
@@ -36,7 +36,7 @@ impl ServerClient {
                                             break;
                                         }
                                         let key_gen = Key::from_slice(key_string.as_bytes());
-                                        let cipher = Aes128GcmSiv::new(key_gen);
+                                        let cipher = Aes128Gcm::new(key_gen);
 
                                         let nonce = Nonce::from_slice(b"unique nonce");
 
@@ -84,7 +84,7 @@ impl ServerClient {
                                             }
 
                                             let key_gen = Key::from_slice(key_string.as_bytes());
-                                            let cipher = Aes128GcmSiv::new(key_gen);
+                                            let cipher = Aes128Gcm::new(key_gen);
 
                                             let nonce = Nonce::from_slice(b"unique nonce");
 
@@ -161,7 +161,7 @@ impl ServerClient {
                             }
                             Err(_) => {
                                 let key = Key::from_slice(key.as_ref());
-                                let cipher = Aes128GcmSiv::new(key);
+                                let cipher = Aes128Gcm::new(key);
 
                                 let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
                                 let text = cipher.decrypt(nonce, response).expect("decryption failure!");
@@ -190,7 +190,7 @@ impl ServerClient {
                     if response != 0 {
                         //let text = from_utf8(&buf).unwrap().trim_matches(char::from(0));
                         let key = Key::from_slice(key.as_ref());
-                        let cipher = Aes128GcmSiv::new(key);
+                        let cipher = Aes128Gcm::new(key);
 
                         let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
                         let text = cipher.decrypt(nonce, &buf[..response]).expect("decryption failure!");

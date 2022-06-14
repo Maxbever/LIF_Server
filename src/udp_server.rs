@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::io;
 use std::net::SocketAddr;
-use aes_gcm_siv::{Aes128GcmSiv, Key, Nonce}; // Or `Aes128GcmSiv`
-use aes_gcm_siv::aead::{Aead, NewAead};
+use aes_gcm::{Aes128Gcm, Key, Nonce}; // Or `Aes128Gcm`
+use aes_gcm::aead::{Aead, NewAead};
 
 use log::warn;
 use mio::{Events, Interest, Poll, Token};
@@ -124,7 +124,7 @@ pub(crate) fn launch_server(
 
     fn encrypt_data(key:&str, text:&str) -> Vec<u8> {
         let key = Key::from_slice(key.as_ref());
-        let cipher = Aes128GcmSiv::new(key);
+        let cipher = Aes128Gcm::new(key);
 
         let nonce = Nonce::from_slice(b"unique nonce");
 

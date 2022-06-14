@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
-use aes_gcm_siv::{Aes128GcmSiv, Key, Nonce}; // Or `Aes128GcmSiv`
-use aes_gcm_siv::aead::{Aead, NewAead};
+use aes_gcm::{Aes128Gcm, Key, Nonce}; // Or `Aes128Gcm`
+use aes_gcm::aead::{Aead, NewAead};
 
 use futures::executor;
 use rustupolis::space::Space;
@@ -179,14 +179,14 @@ impl Repository {
 
     fn decrypt_data(key:&str, text: &[u8]) -> Vec<u8> {
         let key = Key::from_slice(key.as_ref());
-        let cipher = Aes128GcmSiv::new(key);
+        let cipher = Aes128Gcm::new(key);
         let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
-        match cipher.decrypt(nonce, text) {
+        return match cipher.decrypt(nonce, text) {
             Ok(test) => {
-                return test;
+                test
             }
-            Err(e) => {
-                panic!("{}",e)
+            Err(_) => {
+                text.to_vec()
             }
         };
     }
