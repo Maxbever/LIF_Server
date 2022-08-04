@@ -7,10 +7,10 @@ fn main() {
     let server_tcp_name = String::from("TCP_server");
     let server_udp_name = String::from("UDP_server");
     let admin_attribute = String::from("admin");
-    let tuple_space_name = String::from("data");
+    let tuple_space_name = String::from("DATA");
     let tuple_space_name_mean = String::from("tuple_space_mean");
-    let attribute = String::from("attribute");
-    let key = "an example very ";
+    let attribute = String::from("admin");
+    let key = "an_example_very_";
 
     client.connect(
         String::from("127.0.0.1"),
@@ -71,6 +71,10 @@ fn main() {
     }
 
     let mean:f64 = (sum) as f64 / (nb_tuple) as f64;
+
+    client.in_instr(vec![tuple![E::str("state"),E::Any]]);
+    client.out(vec![tuple!(E::str("state"),E::str("state"))]);
+    client.in_instr(vec![tuple![E::Any]]);
 
     client.attach(&server_udp_name, vec![attribute.clone()], &tuple_space_name_mean);
 

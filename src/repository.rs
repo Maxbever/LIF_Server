@@ -1,22 +1,22 @@
+use aes_gcm::aead::{Aead, NewAead};
+use aes_gcm::{Aes128Gcm, Key, Nonce}; // Or `Aes128Gcm`
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, RwLock};
-use aes_gcm::{Aes128Gcm, Key, Nonce}; // Or `Aes128Gcm`
-use aes_gcm::aead::{Aead, NewAead};
 
 use futures::executor;
 use rustupolis::space::Space;
 use rustupolis::store::SimpleStore;
 use rustupolis::tuple;
-use rustupolis::tuple::{E, Tuple};
+use rustupolis::tuple::{Tuple, E};
 
-use crate::tuple_space::TupleSpace;
 use crate::constant::{
-    ATTACH, CREATE, DELETE, EMPTY_REQUEST, IN, NO_MATCHING_TUPLE_FOUND,
-    NO_PERMISSION, NO_TUPLE_SPACE_ATTACHED, OUT, PERMISSION, READ, REQUEST_DOESNT_EXIST,
-    TUPLE_IS_EMPTY, TUPLE_SPACE_NOT_FOUND,
+    ATTACH, CREATE, DELETE, EMPTY_REQUEST, IN, NO_MATCHING_TUPLE_FOUND, NO_PERMISSION,
+    NO_TUPLE_SPACE_ATTACHED, OUT, PERMISSION, READ, REQUEST_DOESNT_EXIST, TUPLE_IS_EMPTY,
+    TUPLE_SPACE_NOT_FOUND,
 };
 use crate::lexing::Lexer;
 use crate::repository::RequestResponse::{DataResponse, NoResponse, OkResponse, SpaceResponse};
+use crate::tuple_space::TupleSpace;
 
 pub struct Repository {
     tuple_spaces: Arc<RwLock<HashMap<String, Arc<Mutex<Space<SimpleStore>>>>>>,
@@ -58,25 +58,46 @@ impl Repository {
     }
 
     pub fn add_tuple_space(&self, name: String, attributes: Vec<String>) {
-        self.tuple_spaces
-            .write()
-            .unwrap()
-            .insert(name.clone(), Arc::new(Mutex::new(Space::new(SimpleStore::new()))));
-        self.add_permission_list(attributes,name.as_str());
+        self.tuple_spaces.write().unwrap().insert(
+            name.clone(),
+            Arc::new(Mutex::new(Space::new(SimpleStore::new()))),
+        );
+        self.add_permission_list(attributes, name.as_str());
     }
 
     pub fn remove_tuple_space(&self, name: &str) {
         self.tuple_spaces.write().unwrap().remove(name);
     }
 
-    pub fn add_tuple_to_tuple_space(&self, tuple_space:String, tuple:Tuple){
+    pub fn add_tuple_to_tuple_space(&self, tuple_space: String, tuple: Tuple) {
         let tuple_spaces = self.tuple_spaces.read().unwrap();
         let tuple_space = tuple_spaces.get(&*tuple_space).unwrap();
         let mut space = tuple_space.lock().unwrap();
-        executor::block_on(space.tuple_out(tuple)).expect("ERROR - When out a value");
+        let mut vec: Vec<E> = Vec::new();
+        let formatted_tuple = Repository::format_tuple(tuple, &mut vec);
+
+        executor::block_on(space.tuple_out(Tuple::from_vec(formatted_tuple.clone())))
+            .expect("ERROR - When out a value");
     }
 
-    pub fn remove_tuple_to_tuple_space(&self, tuple_space:String, tuple:Tuple){
+    fn format_tuple(tuple: Tuple, formatted_tuple: &mut Vec<E>) -> &Vec<E> {
+        if !tuple.is_empty() {
+            formatted_tuple.push(match tuple.first() {
+                E::S(value) => E::S("\"".to_owned() + value + "\""),
+                E::T(tuple) => E::T(Tuple::from_vec(Repository::format_tuple(tuple.clone(), &mut formatted_tuple.clone()).clone())),
+                E::I(rest) => E::I(*rest),
+                E::D(rest) => E::D(*rest),
+                E::Any => E::Any,
+                E::None => E::None,
+            });
+            let mut vec: Vec<E> = Vec::new();
+            let rest = Repository::format_tuple(tuple.rest().clone(), &mut vec);
+            formatted_tuple.append(&mut rest.clone());
+        }
+        return formatted_tuple;
+    }
+
+    pub fn remove_tuple_to_tuple_space(&self, tuple_space: String, tuple: Tuple) {
         let tuple_spaces = self.tuple_spaces.read().unwrap();
         let tuple_space = tuple_spaces.get(&*tuple_space).unwrap();
         let mut space = tuple_space.lock().unwrap();
@@ -177,14 +198,12 @@ impl Repository {
         }
     }
 
-    fn decrypt_data(key:&str, text: &[u8]) -> Vec<u8> {
+    fn decrypt_data(key: &str, text: &[u8]) -> Vec<u8> {
         let key = Key::from_slice(key.as_ref());
         let cipher = Aes128Gcm::new(key);
         let nonce = Nonce::from_slice(b"unique nonce"); // 96-bits; unique per message
         return match cipher.decrypt(nonce, text) {
-            Ok(test) => {
-                test
-            }
+            Ok(test) => test,
             Err(_) => {
                 panic!();
             }
@@ -195,22 +214,22 @@ impl Repository {
         &self,
         request: &[u8],
         client_option: Option<&TupleSpace>,
-        key:&str
+        key: &str,
     ) -> RequestResponse {
         let request_str = &*Repository::decrypt_data(key, request).clone();
         let request = std::str::from_utf8(request_str).unwrap();
-        println!("Decrypted request: {}",&request);
+        println!("Decrypted request: {}", &request);
         let words: Vec<&str> = request.split_whitespace().collect();
         if words.len() != 0 {
             match words[0] {
                 CREATE => {
-                    let attribute_to_create = String::from(words[1]).replace("\"","");
+                    let attribute_to_create = String::from(words[1]).replace("\"", "");
                     if self.check_permission(CREATE, &vec![attribute_to_create], None) {
                         let mut attributes_list: Vec<String> = Vec::new();
                         for index in 3..words.len() {
                             attributes_list.push(String::from(words[index]));
                         }
-                        self.add_tuple_space(String::from(words[2]),attributes_list);
+                        self.add_tuple_space(String::from(words[2]), attributes_list);
                         OkResponse()
                     } else {
                         NoResponse(String::from(NO_PERMISSION))
@@ -258,7 +277,7 @@ impl Repository {
                                     if tuple.is_defined() {
                                         let mut space = client.tuple_space().lock().unwrap();
                                         if let Err(error) =
-                                        executor::block_on(space.tuple_out(tuple))
+                                            executor::block_on(space.tuple_out(tuple))
                                         {
                                             eprintln!(
                                                 "Cannot push tuple into space! Encountered error {:?}",
@@ -300,7 +319,7 @@ impl Repository {
                                 if !rd_tup.is_empty() {
                                     let mut space = client.tuple_space().lock().unwrap();
                                     if let Some(match_tup) =
-                                    executor::block_on(space.tuple_rd(rd_tup))
+                                        executor::block_on(space.tuple_rd(rd_tup))
                                     {
                                         if match_tup.is_empty() {
                                             response =
@@ -350,9 +369,10 @@ impl Repository {
                                 let rd_tup: Tuple = tuples.remove(i);
                                 if !rd_tup.is_empty() {
                                     let mut space = client.tuple_space().lock().unwrap();
-                                    println!("pulling in tuple matching {} from space", rd_tup);
+                                    dbg!("pulling in tuple matching {} from space", &rd_tup);
                                     if let Some(match_tup) =
-                                    executor::block_on(space.tuple_in(rd_tup)) {
+                                        executor::block_on(space.tuple_in(rd_tup))
+                                    {
                                         if match_tup.is_empty() {
                                             response =
                                                 NoResponse(String::from(NO_MATCHING_TUPLE_FOUND));

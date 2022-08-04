@@ -1,3 +1,4 @@
+use rustupolis::tuple;
 use rustupolis::tuple::{E, Tuple};
 use rustupolis_server::repository::Repository;
 use rustupolis_server::server::{Protocol, Server};
@@ -9,7 +10,7 @@ fn main() {
     let port_udp = String::from("9001");
 
     let repository = Repository::new("admin");
-    let key = "an example very ";
+    let key = "an_example_very_";
 
     repository.add_tuple_space(String::from("DATA"),vec![String::from("admin")]);
 
