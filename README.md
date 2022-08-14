@@ -4,7 +4,7 @@ A library for using space tuples in fog computing
 
 The library offers the possibility to create servers with UDP and TCP protocols. These servers allow access to a repository that stores the tuples spaces. The primitives are based on the [Rustupolis library](https://github.com/micutio/rustupolis)
 
-Voici la liste des différentes commandes disponibles : 
+Here is a list of the different commands available:
 
 ```rust
 create {creation_attribute} {tuple_space_name} {permission_attribute}
